@@ -41,11 +41,16 @@ type StartParams = {
 
 const TAG = '[StreamClientScrcpy]';
 
+/**
+ * 设备屏幕流客户端类，负责管理设备屏幕流的播放和控制
+ * 继承自BaseClient并实现KeyEventListener和InteractionHandlerListener接口
+ */
 export class StreamClientScrcpy
     extends BaseClient<ParamsStreamScrcpy, never>
-    implements KeyEventListener, InteractionHandlerListener
-{
+    implements KeyEventListener, InteractionHandlerListener {
+    /** 流操作的动作类型常量 */
     public static ACTION = 'stream';
+    /** 注册的播放器类映射表，key为播放器全名，value为播放器类 */
     private static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
     private controlButtons?: HTMLElement;
@@ -61,16 +66,29 @@ export class StreamClientScrcpy
     private fitToScreen?: boolean;
     private readonly streamReceiver: StreamReceiverScrcpy;
 
+    /**
+     * 注册支持的播放器类
+     * @param playerClass 要注册的播放器类
+     */
     public static registerPlayer(playerClass: PlayerClass): void {
         if (playerClass.isSupported()) {
             this.players.set(playerClass.playerFullName, playerClass);
         }
     }
 
+    /**
+     * 获取所有已注册的播放器类
+     * @returns 播放器类数组
+     */
     public static getPlayers(): PlayerClass[] {
         return Array.from(this.players.values());
     }
 
+    /**
+     * 根据播放器名称获取对应的播放器类
+     * @param playerName 播放器名称(全名或简称)
+     * @returns 播放器类或undefined
+     */
     private static getPlayerClass(playerName: string): PlayerClass | undefined {
         let playerClass: PlayerClass | undefined;
         for (const value of StreamClientScrcpy.players.values()) {
@@ -81,6 +99,13 @@ export class StreamClientScrcpy
         return playerClass;
     }
 
+    /**
+     * 创建指定名称的播放器实例
+     * @param playerName 播放器名称
+     * @param udid 设备唯一标识
+     * @param displayInfo 可选的显示信息
+     * @returns 播放器实例或undefined
+     */
     public static createPlayer(playerName: string, udid: string, displayInfo?: DisplayInfo): BasePlayer | undefined {
         const playerClass = this.getPlayerClass(playerName);
         if (!playerClass) {
@@ -89,6 +114,13 @@ export class StreamClientScrcpy
         return new playerClass(udid, displayInfo);
     }
 
+    /**
+     * 获取播放器是否适合屏幕显示的设置
+     * @param playerName 播放器名称
+     * @param udid 设备唯一标识
+     * @param displayInfo 可选的显示信息
+     * @returns 是否适合屏幕显示
+     */
     public static getFitToScreen(playerName: string, udid: string, displayInfo?: DisplayInfo): boolean {
         const playerClass = this.getPlayerClass(playerName);
         if (!playerClass) {
@@ -97,6 +129,15 @@ export class StreamClientScrcpy
         return playerClass.getFitToScreenStatus(udid, displayInfo);
     }
 
+    /**
+     * 启动流客户端
+     * @param query URL查询参数或流参数对象
+     * @param streamReceiver 可选的流接收器实例
+     * @param player 可选的播放器实例
+     * @param fitToScreen 是否适合屏幕显示
+     * @param videoSettings 可选的视频设置
+     * @returns 流客户端实例
+     */
     public static start(
         query: URLSearchParams | ParamsStreamScrcpy,
         streamReceiver?: StreamReceiverScrcpy,
@@ -112,6 +153,12 @@ export class StreamClientScrcpy
         }
     }
 
+    /**
+     * 创建带有新边界尺寸的视频设置
+     * @param old 原始视频设置
+     * @param newBounds 新的边界尺寸
+     * @returns 新的视频设置实例
+     */
     private static createVideoSettingsWithBounds(old: VideoSettings, newBounds: Size): VideoSettings {
         return new VideoSettings({
             crop: old.crop,
@@ -127,6 +174,14 @@ export class StreamClientScrcpy
         });
     }
 
+    /**
+     * 构造函数
+     * @param params 流参数
+     * @param streamReceiver 可选的流接收器实例
+     * @param player 可选的播放器实例
+     * @param fitToScreen 是否适合屏幕显示
+     * @param videoSettings 可选的视频设置
+     */
     protected constructor(
         params: ParamsStreamScrcpy,
         streamReceiver?: StreamReceiverScrcpy,
@@ -146,6 +201,12 @@ export class StreamClientScrcpy
         this.setBodyClass('stream');
     }
 
+    /**
+     * 解析URL查询参数为流参数对象
+     * @param params URL查询参数
+     * @returns 流参数对象
+     * @throws 如果action不正确则抛出错误
+     */
     public static parseParameters(params: URLSearchParams): ParamsStreamScrcpy {
         const typedParams = super.parseParameters(params);
         const { action } = typedParams;
@@ -161,12 +222,20 @@ export class StreamClientScrcpy
         };
     }
 
+    /**
+     * 处理设备消息
+     * @param message 设备消息
+     */
     public OnDeviceMessage = (message: DeviceMessage): void => {
         if (this.moreBox) {
             this.moreBox.OnDeviceMessage(message);
         }
     };
 
+    /**
+     * 处理视频数据
+     * @param data 视频数据缓冲区
+     */
     public onVideo = (data: ArrayBuffer): void => {
         if (!this.player) {
             return;
@@ -180,12 +249,20 @@ export class StreamClientScrcpy
         }
     };
 
+    /**
+     * 处理客户端统计信息
+     * @param stats 客户端统计信息
+     */
     public onClientsStats = (stats: ClientsStats): void => {
         this.deviceName = stats.deviceName;
         this.clientId = stats.clientId;
         this.setTitle(`Stream ${this.deviceName}`);
     };
 
+    /**
+     * 处理显示信息更新
+     * @param infoArray 包含显示信息的数组
+     */
     public onDisplayInfo = (infoArray: DisplayCombinedInfo[]): void => {
         if (!this.player) {
             return;
@@ -248,6 +325,9 @@ export class StreamClientScrcpy
         }
     };
 
+    /**
+     * 处理连接断开事件
+     */
     public onDisconnected = (): void => {
         this.streamReceiver.off('deviceMessage', this.OnDeviceMessage);
         this.streamReceiver.off('video', this.onVideo);
@@ -261,6 +341,15 @@ export class StreamClientScrcpy
         this.touchHandler = undefined;
     };
 
+    /**
+     * 启动设备流
+     * @param udid 设备唯一标识
+     * @param player 可选的播放器实例
+     * @param playerName 可选的播放器名称
+     * @param videoSettings 可选的视频设置
+     * @param fitToScreen 是否适合屏幕显示
+     * @throws 如果参数无效则抛出错误
+     */
     public startStream({ udid, player, playerName, videoSettings, fitToScreen }: StartParams): void {
         if (!udid) {
             throw Error(`Invalid udid value: "${udid}"`);
@@ -347,6 +436,10 @@ export class StreamClientScrcpy
         console.log(TAG, player.getName(), udid);
     }
 
+    /**
+     * 发送控制消息
+     * @param message 要发送的控制消息
+     */
     public sendMessage(message: ControlMessage): void {
         this.streamReceiver.sendEvent(message);
     }
@@ -355,6 +448,10 @@ export class StreamClientScrcpy
         return this.deviceName;
     }
 
+    /**
+     * 设置是否处理键盘事件
+     * @param enabled 是否启用键盘事件处理
+     */
     public setHandleKeyboardEvents(enabled: boolean): void {
         if (enabled) {
             KeyInputHandler.addEventListener(this);
@@ -363,10 +460,18 @@ export class StreamClientScrcpy
         }
     }
 
+    /**
+     * 处理键盘事件
+     * @param event 键盘事件消息
+     */
     public onKeyEvent(event: KeyCodeControlMessage): void {
         this.sendMessage(event);
     }
 
+    /**
+     * 发送新的视频设置
+     * @param videoSettings 新的视频设置
+     */
     public sendNewVideoSetting(videoSettings: VideoSettings): void {
         this.requestedVideoSettings = videoSettings;
         this.sendMessage(CommandControlMessage.createSetVideoSettingsCommand(videoSettings));
@@ -380,6 +485,10 @@ export class StreamClientScrcpy
         return this.clientsCount;
     }
 
+    /**
+     * 获取最大显示尺寸
+     * @returns 最大尺寸或undefined
+     */
     public getMaxSize(): Size | undefined {
         if (!this.controlButtons) {
             return;

@@ -1,0 +1,25 @@
+# 日志文件
+*.log
+logs/
+
+/node_modules
+/dist
+/build
+/.idea
+
+# 编辑器配置
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境变量文件
+.env
+.env.local
+.env.development
+.env.production

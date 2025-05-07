@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "dist:dev",
+            "problemMatcher": [],
+            "label": "npm: dist:dev",
+            "detail": "webpack --config webpack/ws-scrcpy.dev.ts --stats-error-details",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

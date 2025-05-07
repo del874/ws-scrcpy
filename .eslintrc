@@ -1,22 +1,19 @@
 {
-    "extends": [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:prettier/recommended",
-        "prettier"
-    ],
-    "plugins": [
-        "progress",
-        "@typescript-eslint",
-        "prettier"
-    ],
-    "parserOptions":  {
-        "ecmaVersion":  2020,
-        "sourceType":  "module"
+    "extends": ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended", "prettier"],
+    "plugins": ["progress", "@typescript-eslint", "prettier"],
+    "parserOptions": {
+        "ecmaVersion": 2020,
+        "sourceType": "module"
     },
     "rules": {
         "progress/activate": 1,
-        "import/no-absolute-path": "off"
+        "import/no-absolute-path": "off",
+        "prettier/prettier": [
+            "error",
+            {
+                "endOfLine": "auto"
+            }
+        ]
     },
-    "overrides": [
-    ]
+    "overrides": []
 }

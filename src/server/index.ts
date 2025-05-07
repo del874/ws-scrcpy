@@ -1,3 +1,10 @@
+/**
+ * ws-scrcpy服务端入口文件
+ * 主要功能：
+ * 1. 初始化HTTP和WebSocket服务器
+ * 2. 加载不同平台模块(Android/iOS)
+ * 3. 注册中间件处理请求
+ */
 import '../../LICENSE';
 import * as readline from 'readline';
 import { Config } from './Config';
@@ -9,17 +16,21 @@ import { WebsocketProxy } from './mw/WebsocketProxy';
 import { HostTracker } from './mw/HostTracker';
 import { WebsocketMultiplexer } from './mw/WebsocketMultiplexer';
 
+// 需要启动的基础服务列表
 const servicesToStart: ServiceClass[] = [HttpServer, WebSocketServer];
 
-// MWs that accept WebSocket
+// 接受WebSocket连接的中间件列表
 const mwList: MwFactory[] = [WebsocketProxy, WebsocketMultiplexer];
 
-// MWs that accept Multiplexer
+// 接受Multiplexer连接的中间件列表
 const mw2List: MwFactory[] = [HostTracker];
 
+// 运行中的服务实例
 const runningServices: Service[] = [];
+// 平台模块加载的Promise列表
 const loadPlatformModulesPromises: Promise<void>[] = [];
 
+// 获取配置实例
 const config = Config.getInstance();
 
 /// #if INCLUDE_GOOG
@@ -89,6 +100,8 @@ async function loadApplModules() {
 loadPlatformModulesPromises.push(loadApplModules());
 /// #endif
 
+// 1. 首先加载所有平台模块
+// 2. 然后启动所有基础服务
 Promise.all(loadPlatformModulesPromises)
     .then(() => {
         return servicesToStart.map((serviceClass: ServiceClass) => {
@@ -98,11 +111,13 @@ Promise.all(loadPlatformModulesPromises)
         });
     })
     .then(() => {
+        // 3. 注册WebSocket中间件
         const wsService = WebSocketServer.getInstance();
         mwList.forEach((mwFactory: MwFactory) => {
             wsService.registerMw(mwFactory);
         });
 
+        // 4. 注册Multiplexer中间件
         mw2List.forEach((mwFactory: MwFactory) => {
             WebsocketMultiplexer.registerMw(mwFactory);
         });
@@ -124,7 +139,12 @@ Promise.all(loadPlatformModulesPromises)
         exit('1');
     });
 
+// 退出标志，防止重复调用
 let interrupted = false;
+/**
+ * 优雅退出处理函数
+ * @param signal 接收到的信号
+ */
 function exit(signal: string) {
     console.log(`\nReceived signal ${signal}`);
     if (interrupted) {
@@ -133,6 +153,7 @@ function exit(signal: string) {
         return;
     }
     interrupted = true;
+    // 依次释放所有服务
     runningServices.forEach((service: Service) => {
         const serviceName = service.getName();
         console.log(`Stopping ${serviceName} ...`);

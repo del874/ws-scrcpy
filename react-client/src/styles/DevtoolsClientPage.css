@@ -1,0 +1,36 @@
+/* DevtoolsClientPage组件样式 */
+.devtools-client-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  padding: 16px;
+}
+
+.devtools-header {
+  margin-bottom: 16px;
+}
+
+.devtools-content {
+  flex: 1;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.devtools-container {
+  height: 100%;
+  min-height: 500px;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .devtools-container {
+    min-height: 300px;
+  }
+}

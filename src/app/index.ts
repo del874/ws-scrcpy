@@ -1,11 +1,27 @@
+/**
+ * ws-scrcpy客户端主入口文件
+ * 主要功能：
+ * 1. 根据URL参数加载不同的设备客户端
+ * 2. 注册对应的视频播放器
+ * 3. 启动相应的设备连接服务
+ */
 import '../style/app.css';
 import { StreamClientScrcpy } from './googDevice/client/StreamClientScrcpy';
 import { HostTracker } from './client/HostTracker';
 import { Tool } from './client/Tool';
 
+/**
+ * 页面加载完成后执行的主函数
+ * 1. 解析URL hash参数
+ * 2. 根据action参数启动对应的客户端
+ * 3. 注册可用的视频播放器
+ */
 window.onload = async function (): Promise<void> {
+    // 解析URL hash参数，去除#!/前缀
     const hash = location.hash.replace(/^#!/, '');
+    // 将hash转换为URLSearchParams对象
     const parsedQuery = new URLSearchParams(hash);
+    // 获取action参数决定启动哪种客户端
     const action = parsedQuery.get('action');
 
     /// #if USE_BROADWAY
@@ -28,6 +44,7 @@ window.onload = async function (): Promise<void> {
     StreamClientScrcpy.registerPlayer(WebCodecsPlayer);
     /// #endif
 
+    // 如果是Android设备流请求，启动scrcpy客户端
     if (action === StreamClientScrcpy.ACTION && typeof parsedQuery.get('udid') === 'string') {
         StreamClientScrcpy.start(parsedQuery);
         return;
@@ -102,11 +119,13 @@ window.onload = async function (): Promise<void> {
     tools.push(FileListingClient);
     /// #endif
 
+    // 如果有注册的工具客户端，统一注册到设备追踪器
     if (tools.length) {
         const { DeviceTracker } = await import('./googDevice/client/DeviceTracker');
         tools.forEach((tool) => {
             DeviceTracker.registerTool(tool);
         });
     }
+    // 启动主机追踪服务
     HostTracker.start();
 };

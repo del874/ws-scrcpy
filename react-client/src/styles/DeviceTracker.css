@@ -1,0 +1,151 @@
+.device-tracker {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--device-list-default-color, #fff);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--device-border-color, #ddd);
+}
+
+.tracker-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-color, #333);
+}
+
+.connection-status {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.connection-status.connected {
+  background-color: rgba(0, 128, 0, 0.1);
+  color: green;
+}
+
+.connection-status.disconnected {
+  background-color: rgba(255, 0, 0, 0.1);
+  color: red;
+}
+
+.error-message {
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: rgba(255, 0, 0, 0.1);
+  color: red;
+  border-radius: 4px;
+}
+
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.no-devices {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary-color, #666);
+  background-color: var(--device-list-stripe-color, #f8f8f8);
+  border-radius: 4px;
+}
+
+.device {
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid var(--device-border-color, #ddd);
+  transition: all 0.3s ease;
+}
+
+.device:hover {
+  background-color: var(--device-list-hover-color, #f0f5ff);
+}
+
+.device.active {
+  border-left: 4px solid green;
+}
+
+.device.not-active {
+  border-left: 4px solid red;
+  opacity: 0.7;
+}
+
+.device-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.device-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.device-serial {
+  color: var(--url-color, #0066cc);
+  font-size: 0.9rem;
+}
+
+.device-version {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.release-version {
+  font-weight: 500;
+}
+
+.sdk-version {
+  font-size: 0.8rem;
+  color: var(--url-color, #0066cc);
+}
+
+.device-state {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.active .device-state {
+  background-color: green;
+}
+
+.not-active .device-state {
+  background-color: red;
+}
+
+.device-interfaces, .device-pid {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary-color, #666);
+}
+
+.device-interfaces span, .device-pid span {
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .device-tracker {
+    background-color: var(--device-list-default-color, #222);
+  }
+  
+  .device:hover {
+    background-color: var(--device-list-hover-color, #2a3142);
+  }
+}

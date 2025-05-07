@@ -1,3 +1,4 @@
+// 导入必要的模块和类型
 import '../../../style/dialog.css';
 import GoogDeviceDescriptor from '../../../types/GoogDeviceDescriptor';
 import { DisplayCombinedInfo } from '../../client/StreamReceiver';
@@ -16,10 +17,21 @@ import { StreamReceiverScrcpy } from './StreamReceiverScrcpy';
 import { ParamsStreamScrcpy } from '../../../types/ParamsStreamScrcpy';
 import { BaseClient } from '../../client/BaseClient';
 
+/**
+ * 配置对话框事件接口
+ * @property closed - 对话框关闭事件，包含对话框实例和结果布尔值
+ */
 interface ConfigureScrcpyEvents {
     closed: { dialog: ConfigureScrcpy; result: boolean };
 }
 
+/**
+ * 范围类型定义
+ * @property max - 最大值
+ * @property min - 最小值
+ * @property step - 步长
+ * @property formatter - 可选的值格式化函数
+ */
 type Range = {
     max: number;
     min: number;
@@ -27,30 +39,63 @@ type Range = {
     formatter?: (value: number) => string;
 };
 
+/**
+ * Scrcpy流配置对话框类
+ * 负责管理设备流的配置界面，包括视频参数设置、编码器选择等
+ * 继承自BaseClient并实现ConfigureScrcpyEvents事件接口
+ */
 export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScrcpyEvents> {
+    // 日志标签，用于标识当前实例
     private readonly TAG: string;
+    // 设备唯一标识符
     private readonly udid: string;
+    // 转义后的设备标识符，用于HTML元素ID
     private readonly escapedUdid: string;
+    // 本地存储播放器设置的键名
     private readonly playerStorageKey: string;
+    // 设备名称
     private deviceName: string;
+    // 流接收器实例，负责与设备通信
     private streamReceiver?: StreamReceiverScrcpy;
+    // 当前选择的播放器名称
     private playerName?: string;
+    // 设备显示信息
     private displayInfo?: DisplayInfo;
+    // 对话框背景元素
     private background: HTMLElement;
+    // 对话框主体元素
     private dialogBody?: HTMLElement;
+    // 确认按钮
     private okButton?: HTMLButtonElement;
+    // 适应屏幕复选框
     private fitToScreenCheckbox?: HTMLInputElement;
+    // 重置设置按钮
     private resetSettingsButton?: HTMLButtonElement;
+    // 加载设置按钮
     private loadSettingsButton?: HTMLButtonElement;
+    // 保存设置按钮
     private saveSettingsButton?: HTMLButtonElement;
+    // 播放器选择下拉框
     private playerSelectElement?: HTMLSelectElement;
+    // 显示ID选择下拉框
     private displayIdSelectElement?: HTMLSelectElement;
+    // 编码器选择下拉框
     private encoderSelectElement?: HTMLSelectElement;
+    // 连接状态显示元素
     private connectionStatusElement?: HTMLElement;
+    // 对话框容器元素
     private dialogContainer?: HTMLElement;
+    // 状态文本
     private statusText = '';
+    // 当前连接数
     private connectionCount = 0;
 
+    /**
+     * 构造函数
+     * @param tracker 设备追踪器实例
+     * @param descriptor 设备描述符
+     * @param params 流参数配置
+     */
     constructor(private readonly tracker: DeviceTracker, descriptor: GoogDeviceDescriptor, params: ParamsStreamScrcpy) {
         super(params);
         this.udid = descriptor.udid;
@@ -63,10 +108,19 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         this.background = this.createUI();
     }
 
+    /**
+     * 获取设备追踪器实例
+     * @returns 当前关联的设备追踪器
+     */
     public getTracker(): DeviceTracker {
         return this.tracker;
     }
 
+    /**
+     * 创建流接收器实例
+     * 如果已有流接收器，先停止并移除事件监听器
+     * @param params 流参数配置
+     */
     private createStreamReceiver(params: ParamsStreamScrcpy): void {
         if (this.streamReceiver) {
             this.detachEventsListeners(this.streamReceiver);
@@ -76,6 +130,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         this.attachEventsListeners(this.streamReceiver);
     }
 
+    /**
+     * 为流接收器添加事件监听器
+     * @param streamReceiver 流接收器实例
+     */
     private attachEventsListeners(streamReceiver: StreamReceiverScrcpy): void {
         streamReceiver.on('encoders', this.onEncoders);
         streamReceiver.on('displayInfo', this.onDisplayInfo);
@@ -83,6 +141,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         streamReceiver.on('disconnected', this.onDisconnected);
     }
 
+    /**
+     * 移除流接收器的事件监听器
+     * @param streamReceiver 流接收器实例
+     */
     private detachEventsListeners(streamReceiver: StreamReceiverScrcpy): void {
         streamReceiver.off('encoders', this.onEncoders);
         streamReceiver.off('displayInfo', this.onDisplayInfo);
@@ -90,6 +152,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         streamReceiver.off('disconnected', this.onDisconnected);
     }
 
+    /**
+     * 更新连接状态显示
+     * 将当前状态文本和连接数显示在状态元素上
+     */
     private updateStatus(): void {
         if (!this.connectionStatusElement) {
             return;
@@ -101,6 +167,11 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         this.connectionStatusElement.innerText = text;
     }
 
+    /**
+     * 编码器列表更新事件处理
+     * 更新编码器选择下拉框的选项
+     * @param encoders 可用的编码器名称数组
+     */
     private onEncoders = (encoders: string[]): void => {
         // console.log(this.TAG, 'Encoders', encoders);
         const select = this.encoderSelectElement || document.createElement('select');
@@ -118,6 +189,11 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         this.encoderSelectElement = select;
     };
 
+    /**
+     * 显示信息更新事件处理
+     * 更新显示ID选择下拉框并应用视频设置
+     * @param infoArray 显示信息数组，包含显示ID、尺寸等信息
+     */
     private onDisplayInfo = (infoArray: DisplayCombinedInfo[]): void => {
         // console.log(this.TAG, 'Received info');
         this.statusText = 'Ready';
@@ -164,6 +240,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         }
     };
 
+    /**
+     * 连接成功事件处理
+     * 更新状态文本并启用确认按钮
+     */
     private onConnected = (): void => {
         // console.log(this.TAG, 'Connected');
         this.statusText = 'Waiting for info...';
@@ -173,6 +253,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         }
     };
 
+    /**
+     * 断开连接事件处理
+     * 更新状态文本并禁用确认按钮，隐藏对话框主体
+     */
     private onDisconnected = (): void => {
         // console.log(this.TAG, 'Disconnected');
         this.statusText = 'Disconnected';
@@ -186,10 +270,18 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         }
     };
 
+    /**
+     * 播放器变更事件处理
+     * 更新当前播放器的视频设置
+     */
     private onPlayerChange = (): void => {
         this.updateVideoSettingsForPlayer();
     };
 
+    /**
+     * 显示ID变更事件处理
+     * 更新当前显示ID并更新播放器的视频设置
+     */
     private onDisplayIdChange = (): void => {
         const select = this.displayIdSelectElement;
         if (!select || !this.streamReceiver) {
@@ -203,6 +295,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         this.updateVideoSettingsForPlayer();
     };
 
+    /**
+     * 获取当前选择的播放器类
+     * @returns 播放器类实例，如果未选择则返回undefined
+     */
     private getPlayer(): PlayerClass | undefined {
         if (!this.playerSelectElement) {
             return;
@@ -213,6 +309,10 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         });
     }
 
+    /**
+     * 更新当前播放器的视频设置
+     * 从播放器加载存储或首选的视频设置并填充到UI
+     */
     private updateVideoSettingsForPlayer(): void {
         const player = this.getPlayer();
         if (player) {
@@ -223,6 +323,11 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         }
     }
 
+    /**
+     * 获取指定ID的基础输入元素
+     * @param id 输入元素的ID前缀
+     * @returns HTML输入元素或null
+     */
     private getBasicInput(id: string): HTMLInputElement | null {
         const element = document.getElementById(`${id}_${this.escapedUdid}`);
         if (!element) {
